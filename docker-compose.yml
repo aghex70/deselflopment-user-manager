@@ -1,0 +1,23 @@
+version: '3.9'
+
+services:
+  user-manager:
+    container_name: deselflopment-user-manager
+    build:
+      context: user_manager
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "13010"]
+    env_file:
+      - user_manager/.env
+    ports:
+      - "13010:13010"
+    networks:
+      deselflopment-database-network: {}
+      deselflopment-webserver-network: {}
+    volumes:
+      - ./user_manager:/app
+
+networks:
+  deselflopment-database-network:
+    external: true
+  deselflopment-webserver-network:
+    external: true

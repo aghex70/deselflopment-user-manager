@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome to deselflopment!</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Add CSS styles */
+        .container {
+            max-width: 100%;
+            padding-right: 15px;
+            padding-left: 15px;
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+        .modal {
+            display: block;
+            text-align: center;
+        }
+
+        .modal-body {
+            margin: 32px;
+        }
+
+        .btn-group {
+            width: 80%;
+            margin: auto;
+            display: block;
+            padding: 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="modal unshareModal text-center" style="display: block;">
+        <div class="modal-body">
+            <h3 style="margin: 32px;">Welcome to Daps</h3>
+            <div class="btn-group">
+                <button class="btn btn-success" onclick="goToLogin()">Login</button>
+                <button class="btn btn-primary" type="submit" onclick="goToRegister()">Register</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Define JavaScript functions
+    function goToLogin() {
+        window.location.href = "http://localhost:13010/login";
+    }
+
+    function goToRegister() {
+        window.location.href = "http://localhost:13010/register";
+    }
+
+    // function skipLogin() {
+    //     if (localStorage.getItem("token") !== "AAAA") {
+    //         window.location.href = "http://localhost:13010/login";
+    //     }
+    // }
+
+    skipLogin();
+</script>
+</body>
+</html>
