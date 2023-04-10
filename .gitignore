@@ -1,0 +1,16 @@
+user_manager/.env
+user_manager/*env
+user_manager/tmp
+
+# Virtualenv
+venv/
+
+# PyCharm
+.idea/
+*.iml
+*.ipr
+*.iws
+
+
+#Jupyter
+.ipynb_checkpoints
