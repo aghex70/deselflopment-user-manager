@@ -138,7 +138,7 @@ def generate_uuid():
 def generate_welcome_email(user):
     subject = "👋👋👋 Welcome to deselflopment!!! 👋👋👋"
     origin = LOCAL_URL if ENVIRONMENT == "local" else PRODUCTION_URL
-    origin += "/users/activate/" + user.activation_code
+    origin += "/activate/" + user.activation_code
     body = f"In order to complete your registration, please click on the following link:\n\n {origin}"
     return subject, body
 
@@ -146,6 +146,6 @@ def generate_welcome_email(user):
 def generate_password_reset_email(user):
     subject = "🔑🔑🔑 Password reset request 🔑🔑🔑"
     origin = LOCAL_URL if ENVIRONMENT == "local" else PRODUCTION_URL
-    origin += "/users/reset-password/" + user.reset_password_code
+    origin += "/reset-password/" + user.reset_password_code
     body = f"In order to reset your password, please click on the following link:\n\n {origin}"
     return subject, body

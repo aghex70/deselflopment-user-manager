@@ -15,11 +15,8 @@
     <div class="container" style="margin-top: 10%">
         <form class="mx-auto w-50" id="loginForm">
             <h1 class="text-center mb-4">Welcome to deselflopment!</h1>
-            <button type="button" class="btn btn-primary mt-4" style="width: 100%" onclick="goToLogin()">Login</button>
-            <button type="button" class="btn btn-success mt-4" style="width: 100%" onclick="goToRegister()">Register</button>
-            <div class="text-center mt-3">
-                <a href="/reset-link" data-rr-ui-event-key="reset-link" class="nav-link">Forgot password?</a>
-            </div>
+            <button type="button" class="btn btn-primary mt-4" style="width: 100%" onclick="goToDAPS()">Go to daps!</button>
+            <button type="button" class="btn btn-warning mt-4" style="width: 100%" onclick="goToKERS()">Go to kers!!</button>
         </form>
     </div>
 </div>
@@ -29,21 +26,14 @@
 
 <!-- Custom JavaScript -->
 <script>
-    function goToLogin() {
-        window.location.href = "/login";
+    function goToDAPS() {
+        window.location.href = "https://daps.deselflopment.com";
     }
 
-    function goToRegister() {
-        window.location.href = "/register";
+    function goToKERS() {
+        window.location.href = "https://kers.deselflopment.com";
     }
 
-    function skipLogin() {
-        if (localStorage.getItem("access_token")) {
-            window.location.href = "/home";
-        }
-    }
-
-    skipLogin();
 </script>
 </body>
 </html>

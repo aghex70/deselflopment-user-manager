@@ -8,6 +8,7 @@ class UserBase(BaseModel):
 
 class UserRegister(UserBase):
     name: str
+    repeat_password: str
 
 
 class UserLogin(UserBase):
@@ -27,7 +28,8 @@ class UserResetLink(BaseModel):
     email: str
 
 
-class UserResetPassword(UserBase):
+class UserResetPassword(BaseModel):
+    password: str
     repeat_password: str
     reset_password_code: str
 

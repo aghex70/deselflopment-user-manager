@@ -1,4 +1,5 @@
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from persistence import crud, database, schemas, utils
 from sqlalchemy.orm import Session
@@ -23,21 +24,34 @@ templates = Jinja2Templates(directory="templates")
 @app.get("/")
 def root(request: Request):
     # Render the template with a custom message
-    return templates.TemplateResponse(
-        "index.html", {"request": request, "message": "Hello to my website!"}
-    )
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.get("/register")
 def read_register(request: Request):
     return templates.TemplateResponse(
         "register.html",
-        {"request": request, "message": "Hello to my register template!"},
+        {"request": request},
     )
 
 
 @app.post("/register", response_model=schemas.UserRegister)
 def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
+    if not user.email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    if not user.password:
+        raise HTTPException(status_code=400, detail="Password is required")
+
+    if not user.repeat_password:
+        raise HTTPException(status_code=400, detail="Repeat password is required")
+
+    if not user.password == user.repeat_password:
+        raise HTTPException(status_code=400, detail="Passwords don't match")
+
+    if not user.name:
+        raise HTTPException(status_code=400, detail="Name is required")
+
     if crud.get_user_by_email(db, email=user.email):
         raise HTTPException(status_code=400, detail="User already registered")
 
@@ -50,11 +64,11 @@ def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
         return Response(status_code=201)
 
 
-@app.get("/users/activate/{activation_code}")
+@app.get("/activate/{activation_code}")
 def activate(request: Request, activation_code: str, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_activation_code(db, activation_code)
     if not db_user:
-        raise HTTPException(status_code=400, detail="Invalid activation code")
+        return RedirectResponse(url="/login")
 
     crud.activate_user(db, db_user)
 
@@ -65,9 +79,7 @@ def activate(request: Request, activation_code: str, db: Session = Depends(get_d
 
 @app.get("/login")
 def read_login(request: Request):
-    return templates.TemplateResponse(
-        "login.html", {"request": request, "message": "Hello to my login template!"}
-    )
+    return templates.TemplateResponse("login.html", {"request": request})
 
 
 @app.post("/login", response_model=schemas.UserLoginResponse)
@@ -91,8 +103,13 @@ def refresh_token(user: schemas.UserRefreshToken, db: Session = Depends(get_db))
     return schemas.UserLoginResponse(access_token=token, user_id=db_user.id)
 
 
+@app.get("/reset-link")
+def read_reset_link(request: Request):
+    return templates.TemplateResponse("reset_link.html", {"request": request})
+
+
 @app.post(
-    "/users/reset-link",
+    "/reset-link",
 )
 def reset_link(user: schemas.UserResetLink, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db, email=user.email)
@@ -109,20 +126,18 @@ def reset_link(user: schemas.UserResetLink, db: Session = Depends(get_db)):
     return Response(status_code=200)
 
 
-@app.get("/users/reset-password/{reset_password_code}")
-def reset_password(
+@app.get("/reset-password/{reset_password_code}")
+def read_reset_password(
     request: Request, reset_password_code: str, db: Session = Depends(get_db)
 ):
     db_user = crud.get_user_by_reset_password_code(db, reset_password_code)
     if not db_user:
-        raise HTTPException(status_code=400, detail="Invalid reset code")
+        return RedirectResponse(url="/reset-link")
 
-    return templates.TemplateResponse(
-        "reset_password.html", {"request": request, "message": "Reset your password!"}
-    )
+    return templates.TemplateResponse("reset_password.html", {"request": request})
 
 
-@app.post("/users/reset-password")
+@app.post("/reset-password")
 def reset_password(user: schemas.UserResetPassword, db: Session = Depends(get_db)):
     if user.password != user.repeat_password:
         raise HTTPException(status_code=400, detail="Passwords do not match")
@@ -133,3 +148,9 @@ def reset_password(user: schemas.UserResetPassword, db: Session = Depends(get_db
 
     crud.update_user_password(db, db_user, user.password)
     return Response(status_code=200)
+
+
+@app.get("/home")
+def root(request: Request):
+    # Render the template with a custom message
+    return templates.TemplateResponse("home.html", {"request": request})
