@@ -13,7 +13,6 @@ CIPHER_IV = os.environ["CIPHER_IV"]
 JWT_SIGNING_KEY = os.environ["JWT_SIGNING_KEY"]
 SENDGRID_API_KEY = os.environ["SENDGRID_API_KEY"]
 FROM_EMAIL = os.environ["FROM_EMAIL"]
-
 ENVIRONMENT = os.environ["ENVIRONMENT"]
 PRODUCTION_URL = os.environ["PRODUCTION_URL"]
 LOCAL_URL = os.environ["LOCAL_URL"]
@@ -85,11 +84,8 @@ def generate_jwt_token(db_user):
         + 96 * 60 * 60,  # Set the expiration time to 96 hours from now
     }
 
-    # Define your signing key
-    my_signing_key = "your_hmac_secret_key"  # Replace with your actual HMAC secret key
-
     # Generate a JWT token with the custom claims and signing key
-    token = jwt.encode(claims, my_signing_key, algorithm="HS256")
+    token = jwt.encode(claims, JWT_SIGNING_KEY, algorithm="HS256")
     return token
 
 
@@ -98,7 +94,7 @@ def retrieve_jwt_claims(db_user):
     try:
         # Decode the token and verify its signature using the provided secret key and algorithm
         token = jwt.decode(
-            db_user.access_token, "your_hmac_secret_key", algorithms=["HS256"]
+            db_user.access_token, JWT_SIGNING_KEY, algorithms=["HS256"]
         )
         # Extract the 'user_id' claim from the decoded token
         user_id = token["user_id"]
