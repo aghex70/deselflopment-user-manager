@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <script>
+        function forceLogin() {
+            if (!localStorage.getItem("access_token")) {
+                window.location.href = getHost() === "localhost" ? "http://localhost/login" : "https://deselflopment.com/login";
+            }
+        }
+
+        forceLogin();
+    </script>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -26,12 +35,34 @@
 
 <!-- Custom JavaScript -->
 <script>
+    function generateQueryParamsFromLocalStorage() {
+        // Retrieve all keys from localStorage
+        let keys = Object.keys(localStorage);
+
+        // Create a new URLSearchParams object
+        let queryParams = new URLSearchParams();
+
+        // Loop through each key and add the key-value pair to queryParams
+        keys.forEach((key) => {
+            const value = localStorage.getItem(key);
+            queryParams.set(key, value);
+        });
+
+        return queryParams.toString();
+    }
+
+    function getHost() {
+        return window.location.host;
+    }
+
     function goToDAPS() {
-        window.location.href = "https://daps.deselflopment.com";
+        let localStorageQueryParams = generateQueryParamsFromLocalStorage();
+        window.location.href = getHost() === "localhost" ? `http://daps.localhost/sync?${localStorageQueryParams}`
+            : `https://daps.deselflopment.com/sync?${localStorageQueryParams}`;
     }
 
     function goToKERS() {
-        window.location.href = "https://kers.deselflopment.com";
+        window.location.href = getHost() === "localhost" ? "http://daps.localhost" : "https://kers.deselflopment.com";
     }
 
 </script>
