@@ -25,14 +25,14 @@ def create_user(db: Session, user: schemas.UserRegister):
 def get_user(db: Session, email: str, password: str):
     db_user = get_user_by_email(db, email)
     if not db_user:
-        return None, "User not found"
+        return None, "User not registered"
 
     if not db_user.active:
         return None, "User not active"
 
     decrypted_password = utils.decrypt_password(db_user.password)
     if decrypted_password != password:
-        return None, "Invalid credentials"
+        return None, "Invalid password"
 
     return db_user, None
 
