@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <script>
+        function skipLogin() {
+            if (localStorage.getItem("access_token")) {
+                window.location.href = "/home";
+            }
+        }
+
+        skipLogin();
+    </script>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -36,14 +45,6 @@
     function goToRegister() {
         window.location.href = "/register";
     }
-
-    function skipLogin() {
-        if (localStorage.getItem("access_token")) {
-            window.location.href = "/home";
-        }
-    }
-
-    skipLogin();
 </script>
 </body>
 </html>
