@@ -1,8 +1,12 @@
+import logging
+
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from persistence import crud, database, schemas, utils
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 
 def get_db():
@@ -37,29 +41,43 @@ def read_register(request: Request):
 
 @app.post("/register", response_model=schemas.UserRegister)
 def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
+    if not user.name:
+        error = "Name is required"
+        logger.error(error)
+        raise HTTPException(status_code=400, detail=error)
+
     if not user.email:
-        raise HTTPException(status_code=400, detail="Email is required")
+        error = "Email is required"
+        logger.error(error)
+        raise HTTPException(status_code=400, detail=error)
 
     if not user.password:
-        raise HTTPException(status_code=400, detail="Password is required")
+        error = "Password is required"
+        logger.error(error)
+        raise HTTPException(status_code=400, detail=error)
 
     if not user.repeat_password:
-        raise HTTPException(status_code=400, detail="Repeat password is required")
+        error = "Repeat password is required"
+        logger.error(error)
+        raise HTTPException(status_code=400, detail=error)
 
     if not user.password == user.repeat_password:
-        raise HTTPException(status_code=400, detail="Passwords don't match")
-
-    if not user.name:
-        raise HTTPException(status_code=400, detail="Name is required")
+        error = "Passwords do not match"
+        logger.error(error)
+        raise HTTPException(status_code=400, detail=error)
 
     if crud.get_user_by_email(db, email=user.email):
-        raise HTTPException(status_code=400, detail="User already registered")
+        error = "User already registered. Try with a different email"
+        logger.error(error)
+        raise HTTPException(status_code=400, detail=error)
 
     if db_user := crud.create_user(db=db, user=user):
         subject, body = utils.generate_welcome_email(db_user)
         email_sent, error = utils.send_email(subject, body, db_user.email)
         crud.create_email(db, subject, body, db_user.id, "register", email_sent, error)
         if not email_sent:
+            error = "Error sending welcome email"
+            logger.error(error)
             raise HTTPException(status_code=400, detail=error)
         return Response(status_code=201)
 
