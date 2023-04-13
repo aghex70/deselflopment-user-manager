@@ -104,6 +104,7 @@ def read_login(request: Request):
 def login(user: schemas.UserBase, db: Session = Depends(get_db)):
     db_user, error = crud.get_user(db, email=user.email, password=user.password)
     if error:
+        logger.error(error)
         raise HTTPException(status_code=400, detail=error)
 
     token = utils.generate_jwt_token(db_user)
