@@ -1,8 +1,7 @@
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.templating import Jinja2Templates
+from persistence import crud, database, schemas, utils
 from sqlalchemy.orm import Session
-
-from persistence import crud, database, utils, schemas
 
 
 def get_db():
@@ -39,14 +38,29 @@ def read_register(request: Request):
 
 @app.post("/register", response_model=schemas.UserRegister)
 def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_email(db, email=user.email)
-    if db_user:
+    if crud.get_user_by_email(db, email=user.email):
         raise HTTPException(status_code=400, detail="User already registered")
 
-    if crud.create_user(db=db, user=user):
-        return templates.TemplateResponse(
-            "login.html", {"request": {}, "message": "lol"}
-        )
+    if db_user := crud.create_user(db=db, user=user):
+        subject, body = utils.generate_welcome_email(db_user)
+        email_sent, error = utils.send_email(subject, body, db_user.email)
+        crud.create_email(db, subject, body, db_user.id, "register", email_sent, error)
+        if not email_sent:
+            raise HTTPException(status_code=400, detail=error)
+        return Response(status_code=201)
+
+
+@app.get("/users/activate/{activation_code}")
+def activate(request: Request, activation_code: str, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_activation_code(db, activation_code)
+    if not db_user:
+        raise HTTPException(status_code=400, detail="Invalid activation code")
+
+    crud.activate_user(db, db_user)
+
+    return templates.TemplateResponse(
+        "login.html", {"request": request, "message": "Proceed to login!"}
+    )
 
 
 @app.get("/login")
@@ -76,9 +90,46 @@ def refresh_token(user: schemas.UserRefreshToken, db: Session = Depends(get_db))
     token = utils.generate_jwt_token(db_user)
     return schemas.UserLoginResponse(access_token=token, user_id=db_user.id)
 
-    # http.HandleFunc("/api/reset-link", s.userHandler.ResetLink)
-    # http.HandleFunc("/api/reset-password", s.userHandler.ResetPassword)
-    # http.HandleFunc("/api/users", JWTAuthMiddleware(s.userHandler.ListUsers))
-    # http.HandleFunc("/api/user/admin", JWTAuthMiddleware(s.userHandler.CheckAdmin))
-    # http.HandleFunc("/api/user/provision", JWTAuthMiddleware(s.userHandler.ProvisionDemoUser))
-    # http.HandleFunc("/api/user/activate", s.userHandler.ActivateUser)
+
+@app.post(
+    "/users/reset-link",
+)
+def reset_link(user: schemas.UserResetLink, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_email(db, email=user.email)
+    if not db_user:
+        raise HTTPException(status_code=400, detail="Invalid email")
+
+    subject, body = utils.generate_password_reset_email(db_user)
+    email_sent, error = utils.send_email(subject, body, db_user.email)
+    crud.create_email(
+        db, subject, body, db_user.id, "reset_password_link", email_sent, error
+    )
+    if not email_sent:
+        raise HTTPException(status_code=400, detail=error)
+    return Response(status_code=200)
+
+
+@app.get("/users/reset-password/{reset_password_code}")
+def reset_password(
+    request: Request, reset_password_code: str, db: Session = Depends(get_db)
+):
+    db_user = crud.get_user_by_reset_password_code(db, reset_password_code)
+    if not db_user:
+        raise HTTPException(status_code=400, detail="Invalid reset code")
+
+    return templates.TemplateResponse(
+        "reset_password.html", {"request": request, "message": "Reset your password!"}
+    )
+
+
+@app.post("/users/reset-password")
+def reset_password(user: schemas.UserResetPassword, db: Session = Depends(get_db)):
+    if user.password != user.repeat_password:
+        raise HTTPException(status_code=400, detail="Passwords do not match")
+
+    db_user = crud.get_user_by_reset_password_code(db, user.reset_password_code)
+    if not db_user:
+        raise HTTPException(status_code=400, detail="Invalid reset code")
+
+    crud.update_user_password(db, db_user, user.password)
+    return Response(status_code=200)

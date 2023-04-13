@@ -23,6 +23,15 @@ class UserRefreshToken(BaseModel):
     access_token: str
 
 
+class UserResetLink(BaseModel):
+    email: str
+
+
+class UserResetPassword(UserBase):
+    repeat_password: str
+    reset_password_code: str
+
+
 class User(UserBase):
     user_id: int
 

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 
 from .database import Base
 
@@ -17,3 +17,16 @@ class User(Base):
     activation_code = Column(String(50), unique=True, index=True)
     active = Column(Boolean, default=False)
     reset_password_code = Column(String(50), unique=True, index=True)
+
+
+class Email(Base):
+    __tablename__ = "deselflopment_emails"
+
+    id = Column(Integer, primary_key=True, index=True)
+    source = Column(String(128), default="deselflopment")
+    subject = Column(String(128))
+    body = Column(Text())
+    creation_date = Column(DateTime, default=datetime.utcnow)
+    sent = Column(Boolean, default=False)
+    error = Column(Text(), nullable=True)
+    user_id = Column(Integer, ForeignKey("deselflopment_users.id"))

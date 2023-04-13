@@ -1,6 +1,10 @@
+import logging
+
 from sqlalchemy.orm import Session
 
-from . import utils, models, schemas
+from . import models, schemas, utils
+
+logger = logging.getLogger(__name__)
 
 
 def create_user(db: Session, user: schemas.UserRegister):
@@ -9,6 +13,8 @@ def create_user(db: Session, user: schemas.UserRegister):
         name=user.name,
         email=user.email,
         password=encrypted_password,
+        activation_code=utils.generate_uuid(),
+        reset_password_code=utils.generate_uuid(),
     )
     db.add(db_user)
     db.commit()
@@ -45,3 +51,59 @@ def get_user_by_id(db: Session, user_id: int):
 #     db.commit()
 #     db.refresh(db_user)
 #     return db_user
+
+
+def create_email(
+    db: Session,
+    subject: str,
+    body: str,
+    user_id: int,
+    source: str,
+    sent: bool,
+    error: None,
+):
+    email = models.Email(
+        source=source,
+        subject=subject,
+        body=body,
+        sent=sent,
+        error=error,
+        user_id=user_id,
+    )
+    db.add(email)
+    db.commit()
+    db.refresh(email)
+    return email
+
+
+def get_user_by_activation_code(db: Session, activation_code: str):
+    return (
+        db.query(models.User)
+        .filter(models.User.activation_code == activation_code)
+        .first()
+    )
+
+
+def activate_user(db: Session, user: models.User):
+    if user.active:
+        logger.warning(f"User {user.email} already active")
+
+    user.active = True
+    db.commit()
+    db.refresh(user)
+
+
+def get_user_by_reset_password_code(db: Session, reset_password_code: str):
+    return (
+        db.query(models.User)
+        .filter(models.User.reset_password_code == reset_password_code)
+        .first()
+    )
+
+
+def update_user_password(db: Session, user: models.User, password: str):
+    encrypted_password = utils.encrypt_password(password)
+    user.password = encrypted_password
+    user.reset_password_code = utils.generate_uuid()
+    db.commit()
+    db.refresh(user)
