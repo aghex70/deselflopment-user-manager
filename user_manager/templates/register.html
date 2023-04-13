@@ -63,18 +63,25 @@ function submitForm() {
         body: JSON.stringify(payload)
     })
     .then(function(response) {
-        if (response.ok) {
-            return response.json();
+        // Check for response status
+        if (response.status === 201) {
+            // No response body for 201, so return null
+            return null;
+        } else if (response.status === 400) {
+            return response.json().then(function(data) {
+                throw new Error(data.detail);
+            });
         } else {
             console.error('Form submission failed');
+            return null;
         }
     })
-    .then(function(data) {
-        localStorage.setItem("language", "en");
-        window.location.href = "/login";
-    })
-    .catch(function(error) {
-    });
+        .then(function(data) {
+            window.location.href = "/login";
+        })
+        .catch(function(error) {
+            console.error('Form submission failed:', error);
+        });
 }
 </script>
 </body>
