@@ -180,3 +180,8 @@ def reset_password(user: auth.UserResetPassword, db: Session = Depends(get_db)):
 def root(request: Request):
     # Render the template with a custom message
     return templates.TemplateResponse("home.html", {"request": request})
+
+
+@app.get("/desync")
+def desync(request: Request):
+    return templates.TemplateResponse("desync.html", {"request": request})
