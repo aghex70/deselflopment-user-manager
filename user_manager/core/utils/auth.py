@@ -1,24 +1,13 @@
 import binascii
-import os
 import time
-import uuid
 
 import jwt
-import sendgrid
 from Crypto.Cipher import AES
-from sendgrid.helpers.mail import Content, Email, Mail, To
 
-CIPHER_KEY = os.environ["CIPHER_KEY"]
-CIPHER_IV = os.environ["CIPHER_IV"]
-JWT_SIGNING_KEY = os.environ["JWT_SIGNING_KEY"]
-SENDGRID_API_KEY = os.environ["SENDGRID_API_KEY"]
-FROM_EMAIL = os.environ["FROM_EMAIL"]
-ENVIRONMENT = os.environ["ENVIRONMENT"]
-PRODUCTION_URL = os.environ["PRODUCTION_URL"]
-LOCAL_URL = os.environ["LOCAL_URL"]
+from ..settings import CIPHER_IV, CIPHER_KEY, JWT_SIGNING_KEY, NINETY_SIX_HOURS
 
 
-def encrypt_password(password):
+def encrypt_password(password: str) -> str:
     key_string = CIPHER_KEY
     # Ensure key_string has an even number of characters
     key_string = key_string.zfill(len(key_string) + len(key_string) % 2)
@@ -46,7 +35,7 @@ def encrypt_password(password):
     return encrypted_hex
 
 
-def decrypt_password(ciphered_password):
+def decrypt_password(ciphered_password: str) -> str:
     # Convert the ciphertext from a hexadecimal string to a bytes object
     encrypted = binascii.unhexlify(ciphered_password)
 
@@ -74,14 +63,13 @@ def decrypt_password(ciphered_password):
     return decrypted.decode("utf-8")
 
 
-def generate_jwt_token(db_user):
+def generate_jwt_token(db_user) -> str:
     # Define your custom claims
     claims = {
         "user_id": db_user.id,
         "admin": db_user.admin,
         "sub": db_user.email,
-        "exp": int(time.time())
-        + 96 * 60 * 60,  # Set the expiration time to 96 hours from now
+        "exp": int(time.time()) + NINETY_SIX_HOURS,
     }
 
     # Generate a JWT token with the custom claims and signing key
@@ -89,59 +77,18 @@ def generate_jwt_token(db_user):
     return token
 
 
-def retrieve_jwt_claims(db_user):
+def retrieve_jwt_claims(db_user) -> tuple[dict | None, str | None]:
     # Parse the token with the secret key
     try:
         # Decode the token and verify its signature using the provided secret key and algorithm
-        token = jwt.decode(
-            db_user.access_token, JWT_SIGNING_KEY, algorithms=["HS256"]
-        )
-        # Extract the 'user_id' claim from the decoded token
-        user_id = token["user_id"]
-        return user_id, None
+        token = jwt.decode(db_user.access_token, JWT_SIGNING_KEY, algorithms=["HS256"])
     except jwt.ExpiredSignatureError:
-        # Handle expired token error
         return None, "Expired token"
     except jwt.InvalidTokenError:
-        # Handle invalid token error
         return None, "Invalid token"
 
-
-def send_email(subject: str, body: str, destination: str) -> tuple[bool, str | None]:
-    sg = sendgrid.SendGridAPIClient(api_key=SENDGRID_API_KEY)
-    from_email = Email(FROM_EMAIL)
-    to_email = To(destination)  # Change to your recipient
-    mail = Mail(from_email, to_email, subject, body)
-
-    # Get a JSON-ready representation of the Mail object
-    mail_json = mail.get()
-
-    try:
-        response = sg.client.mail.send.post(request_body=mail_json)
-    except Exception as e:
-        return False, e
-
-    if response.status_code != 202:
-        return False, f"Error sending email: {response.status_code}"
-
-    return True, None
+    return token, None
 
 
-def generate_uuid():
-    return str(uuid.uuid4())
-
-
-def generate_welcome_email(user):
-    subject = "👋👋👋 Welcome to deselflopment!!! 👋👋👋"
-    origin = LOCAL_URL if ENVIRONMENT == "local" else PRODUCTION_URL
-    origin += "/activate/" + user.activation_code
-    body = f"In order to complete your registration, please click on the following link:\n\n {origin}"
-    return subject, body
-
-
-def generate_password_reset_email(user):
-    subject = "🔑🔑🔑 Password reset request 🔑🔑🔑"
-    origin = LOCAL_URL if ENVIRONMENT == "local" else PRODUCTION_URL
-    origin += "/reset-password/" + user.reset_password_code
-    body = f"In order to reset your password, please click on the following link:\n\n {origin}"
-    return subject, body
+def retrieve_user_id(token: dict) -> int:
+    return token["user_id"]

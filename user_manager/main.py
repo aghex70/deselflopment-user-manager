@@ -1,33 +1,35 @@
 import logging
 
+from core.database import SessionLocal
+from core.database.models import Email, User
+from core.schemas import auth
+from core.utils.auth import generate_jwt_token, retrieve_jwt_claims, retrieve_user_id
+from core.utils.email import (
+    generate_password_reset_email,
+    generate_welcome_email,
+    send_email,
+)
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from persistence import crud, database, schemas, utils
 from sqlalchemy.orm import Session
-
-logger = logging.getLogger(__name__)
 
 
 def get_db():
-    db = database.SessionLocal()
+    db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
 
 
-# Create a FastAPI app instance
+logger = logging.getLogger(__name__)
+templates = Jinja2Templates(directory="core/templates")
 app = FastAPI()
 
-# Initialize Jinja2 templates
-templates = Jinja2Templates(directory="templates")
 
-
-# Define a simple API endpoint that renders a template
 @app.get("/")
 def root(request: Request):
-    # Render the template with a custom message
     return templates.TemplateResponse("index.html", {"request": request})
 
 
@@ -39,42 +41,42 @@ def read_register(request: Request):
     )
 
 
-@app.post("/register", response_model=schemas.UserRegister)
-def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
-    if not user.name:
+@app.post("/register", response_model=auth.UserRegister)
+def register(user_schema: auth.UserRegister, db: Session = Depends(get_db)):
+    if not user_schema.name:
         error = "Name is required"
         logger.error(error)
         raise HTTPException(status_code=400, detail=error)
 
-    if not user.email:
+    if not user_schema.email:
         error = "Email is required"
         logger.error(error)
         raise HTTPException(status_code=400, detail=error)
 
-    if not user.password:
+    if not user_schema.password:
         error = "Password is required"
         logger.error(error)
         raise HTTPException(status_code=400, detail=error)
 
-    if not user.repeat_password:
+    if not user_schema.repeat_password:
         error = "Repeat password is required"
         logger.error(error)
         raise HTTPException(status_code=400, detail=error)
 
-    if not user.password == user.repeat_password:
+    if not user_schema.password == user_schema.repeat_password:
         error = "Passwords do not match"
         logger.error(error)
         raise HTTPException(status_code=400, detail=error)
 
-    if crud.get_user_by_email(db, email=user.email):
+    if User.get_by_email(db=db, email=user_schema.email):
         error = "User already registered. Try with a different email"
         logger.error(error)
         raise HTTPException(status_code=400, detail=error)
 
-    if db_user := crud.create_user(db=db, user=user):
-        subject, body = utils.generate_welcome_email(db_user)
-        email_sent, error = utils.send_email(subject, body, db_user.email)
-        crud.create_email(db, subject, body, db_user.id, "register", email_sent, error)
+    if user := User.create(db=db, user_schema=user_schema):
+        subject, body = generate_welcome_email(user)
+        email_sent, error = send_email(subject, body, user.email)
+        Email.create(db, subject, body, user.id, "register", email_sent, error)
         if not email_sent:
             error = "Error sending welcome email"
             logger.error(error)
@@ -84,15 +86,13 @@ def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
 
 @app.get("/activate/{activation_code}")
 def activate(request: Request, activation_code: str, db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_activation_code(db, activation_code)
-    if not db_user:
+    user = User.get_by_activation_code(db=db, activation_code=activation_code)
+    if not user:
         return RedirectResponse(url="/login")
 
-    crud.activate_user(db, db_user)
+    user.activate(db)
 
-    return templates.TemplateResponse(
-        "login.html", {"request": request, "message": "Proceed to login!"}
-    )
+    return templates.TemplateResponse("login.html", {"request": request})
 
 
 @app.get("/login")
@@ -100,26 +100,29 @@ def read_login(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
 
-@app.post("/login", response_model=schemas.UserLoginResponse)
-def login(user: schemas.UserBase, db: Session = Depends(get_db)):
-    db_user, error = crud.get_user(db, email=user.email, password=user.password)
+@app.post("/login", response_model=auth.UserLoginResponse)
+def login(user: auth.UserBase, db: Session = Depends(get_db)):
+    user, error = User.get_by_email_and_password(
+        db=db, email=user.email, password=user.password
+    )
     if error:
         logger.error(error)
         raise HTTPException(status_code=400, detail=error)
 
-    token = utils.generate_jwt_token(db_user)
-    return schemas.UserLoginResponse(access_token=token, user_id=db_user.id)
+    token = generate_jwt_token(user)
+    return auth.UserLoginResponse(access_token=token, user_id=user.id)
 
 
-@app.post("/refresh-token", response_model=schemas.UserLoginResponse)
-def refresh_token(user: schemas.UserRefreshToken, db: Session = Depends(get_db)):
-    user_id, error = utils.retrieve_jwt_claims(user)
+@app.post("/refresh-token", response_model=auth.UserLoginResponse)
+def refresh_token(user: auth.UserRefreshToken, db: Session = Depends(get_db)):
+    token, error = retrieve_jwt_claims(user)
     if error:
         raise HTTPException(status_code=401, detail=error)
 
-    db_user = crud.get_user_by_id(db, user_id)
-    token = utils.generate_jwt_token(db_user)
-    return schemas.UserLoginResponse(access_token=token, user_id=db_user.id)
+    user_id = retrieve_user_id(token=token)
+    user = User.get_by_id(db=db, user_id=user_id)
+    token = generate_jwt_token(user)
+    return auth.UserLoginResponse(access_token=token, user_id=user_id)
 
 
 @app.get("/reset-link")
@@ -130,15 +133,15 @@ def read_reset_link(request: Request):
 @app.post(
     "/reset-link",
 )
-def reset_link(user: schemas.UserResetLink, db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_email(db, email=user.email)
-    if not db_user:
+def reset_link(user: auth.UserResetLink, db: Session = Depends(get_db)):
+    user = User.get_by_email(db=db, email=user.email)
+    if not user:
         raise HTTPException(status_code=400, detail="Invalid email")
 
-    subject, body = utils.generate_password_reset_email(db_user)
-    email_sent, error = utils.send_email(subject, body, db_user.email)
-    crud.create_email(
-        db, subject, body, db_user.id, "reset_password_link", email_sent, error
+    subject, body = generate_password_reset_email(user)
+    email_sent, error = send_email(subject, body, user.email)
+    Email.create(
+        db, subject, body, user.id, "reset_password_link", email_sent, error
     )
     if not email_sent:
         raise HTTPException(status_code=400, detail=error)
@@ -149,23 +152,27 @@ def reset_link(user: schemas.UserResetLink, db: Session = Depends(get_db)):
 def read_reset_password(
     request: Request, reset_password_code: str, db: Session = Depends(get_db)
 ):
-    db_user = crud.get_user_by_reset_password_code(db, reset_password_code)
-    if not db_user:
+    user = User.get_by_reset_password_code(
+        db=db, reset_password_code=reset_password_code
+    )
+    if not user:
         return RedirectResponse(url="/reset-link")
 
     return templates.TemplateResponse("reset_password.html", {"request": request})
 
 
 @app.post("/reset-password")
-def reset_password(user: schemas.UserResetPassword, db: Session = Depends(get_db)):
+def reset_password(user: auth.UserResetPassword, db: Session = Depends(get_db)):
     if user.password != user.repeat_password:
         raise HTTPException(status_code=400, detail="Passwords do not match")
 
-    db_user = crud.get_user_by_reset_password_code(db, user.reset_password_code)
-    if not db_user:
+    user = User.get_by_reset_password_code(
+        db=db, reset_password_code=user.reset_password_code
+    )
+    if not user:
         raise HTTPException(status_code=400, detail="Invalid reset code")
 
-    crud.update_user_password(db, db_user, user.password)
+    user.update_password(db=db, password=user.password)
     return Response(status_code=200)
 
 
