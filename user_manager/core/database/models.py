@@ -12,6 +12,7 @@ from ..utils.common import generate_uuid
 logger = logging.getLogger(__name__)
 Base = declarative_base()
 
+
 class User(Base):
     __tablename__ = "deselflopment_users"
 

@@ -5,11 +5,11 @@ services:
     container_name: deselflopment-user-manager
     build:
       context: user_manager
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "13010"]
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "18010"]
     env_file:
       - user_manager/.env
     ports:
-      - "13010:13010"
+      - "18010:18010"
     networks:
       deselflopment-database-network: {}
       deselflopment-webserver-network: {}
