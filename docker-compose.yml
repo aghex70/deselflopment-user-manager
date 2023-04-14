@@ -7,7 +7,7 @@ services:
       context: user_manager
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "18010"]
     env_file:
-      - user_manager/.env
+      - .env
     ports:
       - "18010:18010"
     networks:

@@ -1,6 +1,5 @@
-user_manager/.env
-user_manager/*env
-user_manager/tmp
+.env
+*env
 
 # Virtualenv
 venv/
