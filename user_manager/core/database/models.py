@@ -9,22 +9,8 @@ from ..schemas import auth
 from ..utils.auth import decrypt_password, encrypt_password
 from ..utils.common import generate_uuid
 
-# from . import SessionLocal
-
 logger = logging.getLogger(__name__)
 Base = declarative_base()
-
-
-# def get_db():
-#     _db = SessionLocal()
-#     try:
-#         yield _db
-#     finally:
-#         _db.close()
-#
-#
-# db = Depends(get_db)
-
 
 class User(Base):
     __tablename__ = "deselflopment_users"
