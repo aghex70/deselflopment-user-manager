@@ -2,6 +2,10 @@
 <html>
 <head>
     <script>
+        function getHost() {
+            return window.location.host;
+        }
+
         function forceLogin() {
             if (!localStorage.getItem("access_token")) {
                 window.location.href = getHost() === "localhost" ? "http://localhost/login" : "https://deselflopment.com/login";
@@ -49,10 +53,6 @@
         });
 
         return queryParams.toString();
-    }
-
-    function getHost() {
-        return window.location.host;
     }
 
     function goToDAPS() {
