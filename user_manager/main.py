@@ -140,9 +140,7 @@ def reset_link(user: auth.UserResetLink, db: Session = Depends(get_db)):
 
     subject, body = generate_password_reset_email(user)
     email_sent, error = send_email(subject, body, user.email)
-    Email.create(
-        db, subject, body, user.id, "reset_password_link", email_sent, error
-    )
+    Email.create(db, subject, body, user.id, "reset_password_link", email_sent, error)
     if not email_sent:
         raise HTTPException(status_code=400, detail=error)
     return Response(status_code=200)

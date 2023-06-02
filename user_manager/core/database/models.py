@@ -1,7 +1,16 @@
 import logging
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    Text,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
@@ -27,20 +36,44 @@ class User(Base):
     reset_password_code = Column(String(50), unique=True, index=True)
 
     @classmethod
-    def create(
-        cls, db: Session, user_schema: auth.UserRegister
-    ) -> "User":
+    def create(cls, db: Session, user_schema: auth.UserRegister) -> "User":
         encrypted_password = encrypt_password(user_schema.password)
-        user = cls(
+        activation_code, reset_password_code = generate_uuid(), generate_uuid()
+        metadata = Base.metadata
+        agp_users_table = Table(
+            "agp_users",
+            metadata,
+            Column("id", String, primary_key=True, autoincrement=True),
+            Column("name", String),
+            Column("email", String),
+            Column("admin", Boolean),
+            Column("registration_date", DateTime),
+            Column("password", String),
+            Column("activation_code", String),
+            Column("active", Boolean),
+            Column("reset_password_code", String),
+            extend_existing=True,
+        )
+
+        user = User(
             name=user_schema.name,
             email=user_schema.email,
             password=encrypted_password,
-            activation_code=generate_uuid(),
-            reset_password_code=generate_uuid(),
+            activation_code=activation_code,
+            reset_password_code=reset_password_code,
         )
         db.add(user)
+
+        agp_users_insert = agp_users_table.insert().values(
+            id=user.id,
+            name=user_schema.name,
+            email=user_schema.email,
+            password=encrypted_password,
+            activation_code=activation_code,
+            reset_password_code=reset_password_code,
+        )
+        db.execute(agp_users_insert)
         db.commit()
-        db.refresh(user)
         return user
 
     @classmethod
