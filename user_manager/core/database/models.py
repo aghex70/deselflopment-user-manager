@@ -11,15 +11,16 @@ from sqlalchemy import (
     Table,
     Text,
 )
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
-from ..schemas import auth
-from ..utils.auth import decrypt_password, encrypt_password
-from ..utils.common import generate_uuid
+from core.database.agp.models import create_agp_user
+from core.database.babl.models import create_babl_user
+from core.database import Base
+from core.schemas import auth
+from core.utils.auth import decrypt_password, encrypt_password
+from core.utils.common import generate_uuid
 
 logger = logging.getLogger(__name__)
-Base = declarative_base()
 
 
 class User(Base):
@@ -39,22 +40,6 @@ class User(Base):
     def create(cls, db: Session, user_schema: auth.UserRegister) -> "User":
         encrypted_password = encrypt_password(user_schema.password)
         activation_code, reset_password_code = generate_uuid(), generate_uuid()
-        metadata = Base.metadata
-        agp_users_table = Table(
-            "agp_users",
-            metadata,
-            Column("id", String, primary_key=True, autoincrement=True),
-            Column("name", String),
-            Column("email", String),
-            Column("admin", Boolean),
-            Column("registration_date", DateTime),
-            Column("password", String),
-            Column("activation_code", String),
-            Column("active", Boolean),
-            Column("reset_password_code", String),
-            extend_existing=True,
-        )
-
         user = User(
             name=user_schema.name,
             email=user_schema.email,
@@ -64,15 +49,12 @@ class User(Base):
         )
         db.add(user)
 
-        agp_users_insert = agp_users_table.insert().values(
-            id=user.id,
-            name=user_schema.name,
-            email=user_schema.email,
-            password=encrypted_password,
-            activation_code=activation_code,
-            reset_password_code=reset_password_code,
-        )
-        db.execute(agp_users_insert)
+        # Create All Genre Profile user
+        create_agp_user(db, user)
+
+        # Create Build A Better Life user
+        create_babl_user(db, user)
+
         db.commit()
         return user
 
