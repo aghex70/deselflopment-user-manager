@@ -52,15 +52,18 @@ def decrypt_password(ciphered_password: str) -> str:
     # Create a new AES cipher block with the IV
     block = AES.new(key, AES.MODE_CBC, iv)
 
-    # Decrypt the ciphertext using the CBC cipher mode
     decrypted = block.decrypt(encrypted)
 
     # Remove the padding from the decrypted password
     padding = decrypted[-1]
-    decrypted = decrypted[:-padding]
+    if padding:
+        decrypted = decrypted[:-padding]
+
+    # Convert the bytes to a string and remove any null characters
+    decrypted_str = decrypted.decode("utf-8").rstrip('\x00')
 
     # Return the decrypted password as a string
-    return decrypted.decode("utf-8")
+    return decrypted_str
 
 
 def generate_jwt_token(db_user) -> str:
