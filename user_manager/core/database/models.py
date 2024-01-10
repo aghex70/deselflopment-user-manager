@@ -28,12 +28,16 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(128))
-    email = Column(String(128), unique=True, index=True)
+    email = Column(String(255), unique=True, index=True)
     admin = Column(Boolean, default=False)
-    registration_date = Column(DateTime, default=datetime.utcnow)
-    password = Column(String(128))
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime)
+    deleted_at = Column(DateTime)
+    password = Column(String(255))
+    language = Column(String(50), default="es")
     activation_code = Column(String(50), unique=True, index=True)
     active = Column(Boolean, default=False)
+    auto_suggest = Column(Boolean, default=False)
     reset_password_code = Column(String(50), unique=True, index=True)
 
     @classmethod
@@ -49,11 +53,11 @@ class User(Base):
         )
         db.add(user)
 
-        # Create All Genre Profile user
-        create_agp_user(db, user)
-
-        # Create Build A Better Life user
-        create_babl_user(db, user)
+        # # Create All Genre Profile user
+        # create_agp_user(db, user)
+        #
+        # # Create Build A Better Life user
+        # create_babl_user(db, user)
 
         db.commit()
         return user
