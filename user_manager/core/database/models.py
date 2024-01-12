@@ -49,13 +49,13 @@ class User(Base):
         )
         db.add(user)
 
-	"""
+        """
         # Create All Genre Profile user
         create_agp_user(db, user)
 
         # Create Build A Better Life user
         create_babl_user(db, user)
-	"""
+        """
 
         db.commit()
         return user
