@@ -59,6 +59,13 @@ function submitForm() {
             return response.json();
         } else if (response.status === 400) {
             return response.json().then(function(data) {
+		let errorMessage = data.detail;
+                if (errorMessage === "User not active") {
+                    window.location.href = '/activate-user';
+                }
+                else if (errorMessage === "User not registered") {
+                    window.location.href = '/register';
+                }
                 throw new Error(data.detail);
             });
         } else {
