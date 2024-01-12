@@ -30,7 +30,7 @@
             <h1 class="text-center mb-4">Welcome to deselflopment!</h1>
             <button type="button" class="btn btn-primary mt-4" style="width: 100%" onclick="goToDAPS()">Go to daps!</button>
             <button type="button" class="btn btn-warning mt-4" style="width: 100%" onclick="goToAGP()" disabled>Go to agp!!</button>
-            <button type="button" class="btn btn-success mt-4" style="width: 100%" onclick="goToKERS()" disabled>Go to babl!!!</button>
+            <button type="button" class="btn btn-success mt-4" style="width: 100%" onclick="goToBABL()" disabled>Go to babl!!!</button>
             <button type="button" class="btn btn-danger mt-4" style="width: 100%" onclick="goToKERS()" disabled>Go to camf!!!!</button>
         </form>
     </div>
@@ -70,6 +70,13 @@
     function goToAGP() {
         window.location.href = getHost() === "localhost" ? `http://agp.localhost/sync?${localStorageQueryParams}`
             : `https://agp.deselflopment.com/sync?${localStorageQueryParams}`;
+    }
+
+    function goToBABL() {
+        // window.location.href = getHost() === "localhost" ? `http://babl.localhost/sync?${localStorageQueryParams}`
+        //     : `https://babl.deselflopment.com/sync?${localStorageQueryParams}`;
+        window.location.href = getHost() === "localhost" ? `http://babl.localhost`
+            : `https://babl.deselflopment.com}`;
     }
 
 </script>
