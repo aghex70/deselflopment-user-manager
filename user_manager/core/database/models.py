@@ -64,6 +64,7 @@ class User(Base):
         )
         db.add(user)
 
+        """
         agp_users_insert = agp_users_table.insert().values(
             id=user.id,
             name=user_schema.name,
@@ -73,6 +74,7 @@ class User(Base):
             reset_password_code=reset_password_code,
         )
         db.execute(agp_users_insert)
+	"""
         db.commit()
         return user
 
