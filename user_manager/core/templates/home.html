@@ -57,19 +57,18 @@
 
     let localStorageQueryParams = generateQueryParamsFromLocalStorage();
     function goToDAPS() {
-        // window.location.href = getHost() === "localhost" ? `http://daps.localhost/sync?${localStorageQueryParams}`
-           // : `https://daps.deselflopment.com/sync?${localStorageQueryParams}`;
-        window.location.href = "http://127.0.0.1:13001";
+        window.location.href = getHost() === "localhost" ? `http://daps.localhost/sync?${localStorageQueryParams}`
+            : `https://daps.deselflopment.com/sync?${localStorageQueryParams}`;
     }
 
     function goToKERS() {
         window.location.href = getHost() === "localhost" ? "http://kers.localhost" : "https://kers.deselflopment.com";
     }
 
-    // function goToAGP() {
-    //     window.location.href = getHost() === "localhost" ? `http://agp.localhost/sync?${localStorageQueryParams}`
-    //         : `https://agp.deselflopment.com/sync?${localStorageQueryParams}`;
-    // }
+    function goToAGP() {
+        window.location.href = getHost() === "localhost" ? `http://agp.localhost/sync?${localStorageQueryParams}`
+            : `https://agp.deselflopment.com/sync?${localStorageQueryParams}`;
+    }
 
     function goToMPN() {
         window.location.href = getHost() === "localhost" ? `http://mpn.localhost/sync?${localStorageQueryParams}`
