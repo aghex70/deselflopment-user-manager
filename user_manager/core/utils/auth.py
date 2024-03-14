@@ -60,7 +60,7 @@ def decrypt_password(ciphered_password: str) -> str:
         decrypted = decrypted[:-padding]
 
     # Convert the bytes to a string and remove any null characters
-    decrypted_str = decrypted.decode("utf-8").rstrip('\x00')
+    decrypted_str = decrypted.decode("utf-8").rstrip("\x00")
 
     # Return the decrypted password as a string
     return decrypted_str

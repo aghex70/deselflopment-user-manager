@@ -146,6 +146,11 @@ def reset_link(user: auth.UserResetLink, db: Session = Depends(get_db)):
     return Response(status_code=200)
 
 
+@app.get("/activate-user")
+def read_activate_user(request: Request):
+    return templates.TemplateResponse("activate_user.html", {"request": request})
+
+
 @app.get("/reset-password/{reset_password_code}")
 def read_reset_password(
     request: Request, reset_password_code: str, db: Session = Depends(get_db)

@@ -8,13 +8,10 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
-    Table,
     Text,
 )
 from sqlalchemy.orm import Session
 
-from core.database.agp.models import create_agp_user
-from core.database.babl.models import create_babl_user
 from core.database import Base
 from core.schemas import auth
 from core.utils.auth import decrypt_password, encrypt_password
@@ -53,11 +50,8 @@ class User(Base):
         )
         db.add(user)
 
-        # # Create All Genre Profile user
-        # create_agp_user(db, user)
-        #
-        # # Create Build A Better Life user
-        # create_babl_user(db, user)
+        # # Create My Personal Notes user
+        # create_mpn_user(db, user)
 
         db.commit()
         return user

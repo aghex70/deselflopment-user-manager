@@ -28,10 +28,8 @@
     <div class="container" style="margin-top: 10%">
         <form class="mx-auto w-50" id="loginForm">
             <h1 class="text-center mb-4">Welcome to deselflopment!</h1>
-            <button type="button" class="btn btn-primary mt-4" style="width: 100%" onclick="goToDAPS()">Go to daps!</button>
-            <button type="button" class="btn btn-warning mt-4" style="width: 100%" onclick="goToAGP()" disabled>Go to agp!!</button>
-            <button type="button" class="btn btn-success mt-4" style="width: 100%" onclick="goToBABL()" disabled>Go to babl!!!</button>
-            <button type="button" class="btn btn-danger mt-4" style="width: 100%" onclick="goToKERS()" disabled>Go to camf!!!!</button>
+            <button type="button" class="btn btn-primary mt-4" style="width: 100%" onclick="goToDAPS()">GO TO DAPS!</button>
+            <button type="button" class="btn btn-warning mt-4" style="width: 100%" onclick="goToMPN()" disabled>GO TO MPN!!</button>
         </form>
     </div>
 </div>
@@ -59,17 +57,23 @@
 
     let localStorageQueryParams = generateQueryParamsFromLocalStorage();
     function goToDAPS() {
-        window.location.href = getHost() === "localhost" ? `http://daps.localhost/sync?${localStorageQueryParams}`
-            : `https://daps.deselflopment.com/sync?${localStorageQueryParams}`;
+        // window.location.href = getHost() === "localhost" ? `http://daps.localhost/sync?${localStorageQueryParams}`
+           // : `https://daps.deselflopment.com/sync?${localStorageQueryParams}`;
+        window.location.href = "http://127.0.0.1:13001";
     }
 
     function goToKERS() {
         window.location.href = getHost() === "localhost" ? "http://kers.localhost" : "https://kers.deselflopment.com";
     }
 
-    function goToAGP() {
-        window.location.href = getHost() === "localhost" ? `http://agp.localhost/sync?${localStorageQueryParams}`
-            : `https://agp.deselflopment.com/sync?${localStorageQueryParams}`;
+    // function goToAGP() {
+    //     window.location.href = getHost() === "localhost" ? `http://agp.localhost/sync?${localStorageQueryParams}`
+    //         : `https://agp.deselflopment.com/sync?${localStorageQueryParams}`;
+    // }
+
+    function goToMPN() {
+        window.location.href = getHost() === "localhost" ? `http://mpn.localhost/sync?${localStorageQueryParams}`
+            : `https://mpn.deselflopment.com/sync?${localStorageQueryParams}`;
     }
 
     function goToBABL() {

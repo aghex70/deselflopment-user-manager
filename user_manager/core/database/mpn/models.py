@@ -31,6 +31,7 @@ agp_users_table = Table(
     extend_existing=True,
 )
 
+
 def create_agp_user(db: Session, user: "User"):
     agp_users_insert = agp_users_table.insert().values(
         id=generate_uuid(),

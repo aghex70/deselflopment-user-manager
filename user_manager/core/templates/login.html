@@ -59,6 +59,16 @@ function submitForm() {
             return response.json();
         } else if (response.status === 400) {
             return response.json().then(function(data) {
+                let errorMessage = data.detail;
+                if (errorMessage === "User not active") {
+                    window.location.href = '/activate-user';
+                }
+                else if (errorMessage === "User not registered") {
+                    window.location.href = '/register';
+                }
+                else {
+                    throw new Error(data.detail);
+                }
                 throw new Error(data.detail);
             });
         } else {
@@ -72,6 +82,7 @@ function submitForm() {
             localStorage.setItem('access_token', data.access_token);
             localStorage.setItem('user_id', data.user_id);
             window.location.href = '/home';
+            // window.location.href = "http://127.0.0.1:18010/home";
         }
     })
     .catch(function(error) {
